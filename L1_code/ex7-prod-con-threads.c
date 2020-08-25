@@ -6,6 +6,7 @@
 *******************************************************************/
 #include <pthread.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
@@ -13,75 +14,97 @@
 #define CONSUMERS 1
 #define BUFFER_SIZE 10
 
-int producer_buffer[BUFFER_SIZE];
+int producer_buffer[BUFFER_SIZE] = {};
 int consumer_sum;
 int read_i;
 int write_i;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-void initialize()
-{
-	for (int i = 0; i < BUFFER_SIZE; i++) {
-		producer_buffer[i] = 0;
-	}
+bool isQueueFull() {
+    return producer_buffer[write_i] != 0; // if 1, queue is full
 }
 
-void enqueue(int num) 
-{
-	if (producer_buffer[write_i] == 0) {
-		producer_buffer[write_i] = num;
-		write_i = (write_i + 1) % 10;
+bool isQueueEmpty() {
+    return producer_buffer[read_i] == 0; // if 1, queue is empty
+}
+
+void printBuffer() {
+	for (int i = read_i; i < BUFFER_SIZE + read_i; i++) {
+		if (producer_buffer[i % BUFFER_SIZE] == 0) {
+			printf("_ ");
+		} else {
+			printf("%d ", producer_buffer[i % BUFFER_SIZE]);
+		}
 	}
+	printf("\n");
+}
+
+void push(int n)
+{
+    if (producer_buffer[write_i] == 0) {
+        producer_buffer[write_i] = n;
+        write_i = (write_i + 1) % BUFFER_SIZE;
+    }
+    else {
+        printf("Buffer is full!\n");
+    }
 }
 
 int pop()
-{	
-	int num = producer_buffer[read_i];
-	producer_buffer[read_i] = 0;
-	read_i = (read_i + 1) % 10;
-	
-	return num;
-}
-
-int get_buffer_size()
 {
-	int count = 0;
-	for (int i = 0; i < BUFFER_SIZE; i++) {
-		if (producer_buffer[i] != 0) {
-			count++;
-		}
-	}
-	return count;
+    int num = producer_buffer[read_i];
+    producer_buffer[read_i] = 0;
+    read_i = (read_i + 1) % BUFFER_SIZE;
+
+    return num;
 }
 
 void* producer(void* threadid)
 {	
-	pthread_mutex_lock(&lock);
-	if (get_buffer_size() < BUFFER_SIZE) {
-		srand(time(NULL));
-		int num = (rand() % 10) + 1;
-		enqueue(num);	
-	} 
-	pthread_mutex_unlock(&lock);
+	
+	while(1) {
+		pthread_mutex_lock(&lock);
+		if (isQueueFull()) {
+			printf("Buffer is full!\n");
+		} else {
+			int num = (rand() % 10) + 1;
+			printf("Writing %d to buffer: ", num);
+			push(num);	
+			printBuffer();
+		}
+		/*
+			need to add condition variable here 
+			so that producer thread does not race for the mutex
+		*/
+		pthread_mutex_unlock(&lock);
+
+		sleep(2);
+	}
+	pthread_exit(NULL);
 }
 
 void* consumer(void* threadid)
 {
-	pthread_mutex_lock(&lock);
-	if (get_buffer_size() == 0) {
-		printf("Buffer is empty!\n");
-	} else {
-		int num = pop();
-		consumer_sum += num;
+	while (1) {
+		pthread_mutex_lock(&lock);
+		if (isQueueEmpty()) {
+			printf("Buffer is empty!\n");
+		} else {
+			int num = pop();
+			printf("Reading %d from buffer: ", num);
+			printBuffer();
+			consumer_sum += num;
+		}
+		pthread_mutex_unlock(&lock);
+		sleep(2);
 	}
-	pthread_mutex_unlock(&lock);
+	pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[])
 {	
 	read_i = 0;
 	write_i = 0;
-	initialize();
 
     pthread_t producer_threads[PRODUCERS];
     pthread_t consumer_threads[CONSUMERS];
