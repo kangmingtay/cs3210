@@ -13,7 +13,7 @@
 #define PRODUCERS 2
 #define CONSUMERS 1
 #define BUFFER_SIZE 10
-#define THRESHOLD 100
+#define THRESHOLD 30000
 
 int producer_buffer[BUFFER_SIZE] = {};
 int consumer_sum;
@@ -80,7 +80,7 @@ void* producer(void* threadid)
 		}
 		pthread_mutex_unlock(&lock);
 
-		sleep(1);
+		// sleep(1);
 	}
 	pthread_exit(NULL);
 }
@@ -103,7 +103,7 @@ void* consumer(void* threadid)
             counter += 1;
 		}
 		pthread_mutex_unlock(&lock);
-		sleep(1);
+		// sleep(1);
 	}
 	pthread_exit(NULL);
 }
@@ -112,7 +112,6 @@ int main(int argc, char* argv[])
 {	
     // initialise timer
     time_t start, end;
-    
     time(&start);
 
 	read_i = 0;

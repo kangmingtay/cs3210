@@ -20,10 +20,7 @@
 #define PRODUCERS 2
 #define CONSUMERS 1
 #define BUFFER_SIZE 10
-#define THRESHOLD 100
-
-// int read_i;
-// int write_i;
+#define THRESHOLD 30000
 
 int producer_buffer[BUFFER_SIZE] = {};
 
@@ -119,7 +116,7 @@ int main(int argc, char* argv[])
     printf("shmkey for p = %d\n", shmkey);
 
     // maps file to 
-    shmid = shmget(shmkey, sizeof(producer_buffer) * (BUFFER_SIZE + 4), 0644 | IPC_CREAT);
+    shmid = shmget(shmkey, sizeof(producer_buffer), 0644 | IPC_CREAT);
     shmid_read = shmget(shmkey2, sizeof(int), 0644 | IPC_CREAT);
     shmid_write = shmget(shmkey3, sizeof(int), 0644 | IPC_CREAT);
     shmid_counter = shmget(shmkey4, sizeof(int), 0644 | IPC_CREAT);
@@ -184,7 +181,7 @@ int main(int argc, char* argv[])
                 printBuffer(p, read_i);
             }
             sem_post(sem);
-            sleep(1);
+            // sleep(1);
         }
         exit(0);
     } else if (pid == 0 && processType >= PRODUCERS){
@@ -207,11 +204,12 @@ int main(int argc, char* argv[])
                 printf("Current consumer_sum: %d\n", *consumer_sum);
             }
             sem_post(sem);
-            sleep(1);
+            // sleep(1);
         }
         exit(0);
     } else {
         /* wait for all children to exit */
+        // sleep(1);
         while (pid == waitpid(-1, NULL, 0)) {
             if (errno == ECHILD)
                 break;
@@ -228,6 +226,12 @@ int main(int argc, char* argv[])
 
         shmdt(write_i);
         shmctl(shmid_write, IPC_RMID, 0);
+
+        shmdt(consumer_sum);
+        shmctl(shmid_sum, IPC_RMID, 0);
+
+        shmdt(counter);
+        shmctl(shmid_counter, IPC_RMID, 0);
 
         /* cleanup semaphores */
         sem_unlink("pSem");
