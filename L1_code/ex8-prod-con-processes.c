@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
             }
             // Add rand number to buffer here
             if (isQueueFull(p, write_i)) {
-                printf("Producer(%d): Buffer is full!\n", i);
+                // printf("Producer(%d): Buffer is full!\n", i);
             } else {
                 int num = (rand() % 10) + 1;
                 printf("Producer(%d) writing %d to buffer[%d]: ", i, num, *write_i);
@@ -192,7 +192,7 @@ int main(int argc, char* argv[])
                 break;
             }
             if (isQueueEmpty(p, read_i)) {
-                printf("Consumer: Buffer is empty!\n");
+                // printf("Consumer: Buffer is empty!\n");
             } else {
                 int index = *read_i;
                 int num = pop(p, read_i);

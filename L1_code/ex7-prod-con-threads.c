@@ -48,7 +48,7 @@ void push(int n)
         write_i = (write_i + 1) % BUFFER_SIZE;
     }
     else {
-        printf("Buffer is full!\n");
+        // printf("Buffer is full!\n");
     }
 }
 
@@ -71,7 +71,7 @@ void* producer(void* threadid)
             break;
         }
 		if (isQueueFull()) {
-			printf("Buffer is full!\n");
+			// printf("Buffer is full!\n");
 		} else {
 			int num = (rand() % 10) + 1;
 			printf("Writing %d to buffer: ", num);
@@ -94,7 +94,7 @@ void* consumer(void* threadid)
             break;
         }
 		if (isQueueEmpty()) {
-			printf("Buffer is empty!\n");
+			// printf("Buffer is empty!\n");
 		} else {
 			int num = pop();
 			printf("Reading %d from buffer: ", num);
