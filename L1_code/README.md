@@ -17,7 +17,16 @@ Final result of global variable is printed after all threads are completed.
 1. `gcc -pthread -o ex5 ex5-race-condition.c`
 2. `./ex5`
 
-### Exercise 6
+### Exercise 7
+1. `gcc -o ex7 ex7-prod-con-threads.c`
+2. `./ex7`
+
+### Exercise 8
+1. `gcc -o ex8 ex8-prod-con-processes.c`
+2. `./ex8`
+
+### Exercise 9
+
 
 
 

@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
 #include <semaphore.h>
 #include <sys/shm.h>
 #include <sys/types.h>
@@ -19,6 +20,7 @@
 #define PRODUCERS 2
 #define CONSUMERS 1
 #define BUFFER_SIZE 10
+#define THRESHOLD 100
 
 // int read_i;
 // int write_i;
@@ -73,6 +75,10 @@ void initialise_buffer(int* buffer, int* read_i) {
 
 int main(int argc, char* argv[])
 {
+    /*      initialise timer        */
+    time_t start, end;
+    time(&start);
+
     /*      loop variables          */
     int i;
     /*      shared memory keys      */
@@ -164,7 +170,7 @@ int main(int argc, char* argv[])
     if (pid == 0 && processType < PRODUCERS) {
         while(1) {
             sem_wait(sem);
-            if (*counter == 10) {
+            if (*counter == THRESHOLD) {
                 sem_post(sem);    
                 break;
             }
@@ -184,7 +190,7 @@ int main(int argc, char* argv[])
     } else if (pid == 0 && processType >= PRODUCERS){
         while(1) {
             sem_wait(sem);
-            if (*counter == 10) {
+            if (*counter == THRESHOLD) {
                 sem_post(sem);    
                 break;
             }
@@ -211,8 +217,8 @@ int main(int argc, char* argv[])
                 break;
         }
         printf("\nParent: All children have exited.\n");
+        printf("### counter final value: %d ###\n", *counter);
         printf("### consumer_sum final value = %d ###\n", *consumer_sum);
-        printf("Counter value: %d\n", *counter);
         /* shared memory detach - cleanup allocated memory */
         shmdt(p);
         shmctl(shmid, IPC_RMID, 0);
@@ -228,6 +234,10 @@ int main(int argc, char* argv[])
         sem_close(sem);
         /* unlink prevents the semaphore existing forever */
         /* if a crash occurs during the execution         */
+
+        time(&end);
+        double time_taken = (double)(end-start);
+        printf("### Time Taken = %f ###\n", time_taken);
         exit(0);
     }
 }

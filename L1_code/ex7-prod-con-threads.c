@@ -13,11 +13,13 @@
 #define PRODUCERS 2
 #define CONSUMERS 1
 #define BUFFER_SIZE 10
+#define THRESHOLD 100
 
 int producer_buffer[BUFFER_SIZE] = {};
 int consumer_sum;
 int read_i;
 int write_i;
+int counter;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 bool isQueueFull() {
@@ -64,6 +66,10 @@ void* producer(void* threadid)
 	
 	while(1) {
 		pthread_mutex_lock(&lock);
+        if (counter == THRESHOLD) {
+            pthread_mutex_unlock(&lock);
+            break;
+        }
 		if (isQueueFull()) {
 			printf("Buffer is full!\n");
 		} else {
@@ -72,13 +78,9 @@ void* producer(void* threadid)
 			push(num);	
 			printBuffer();
 		}
-		/*
-			need to add condition variable here 
-			so that producer thread does not race for the mutex
-		*/
 		pthread_mutex_unlock(&lock);
 
-		sleep(2);
+		sleep(1);
 	}
 	pthread_exit(NULL);
 }
@@ -87,6 +89,10 @@ void* consumer(void* threadid)
 {
 	while (1) {
 		pthread_mutex_lock(&lock);
+        if (counter == THRESHOLD) {
+            pthread_mutex_unlock(&lock);
+            break;
+        }
 		if (isQueueEmpty()) {
 			printf("Buffer is empty!\n");
 		} else {
@@ -94,17 +100,24 @@ void* consumer(void* threadid)
 			printf("Reading %d from buffer: ", num);
 			printBuffer();
 			consumer_sum += num;
+            counter += 1;
 		}
 		pthread_mutex_unlock(&lock);
-		sleep(2);
+		sleep(1);
 	}
 	pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[])
 {	
+    // initialise timer
+    time_t start, end;
+    
+    time(&start);
+
 	read_i = 0;
 	write_i = 0;
+    counter = 0;
 
     pthread_t producer_threads[PRODUCERS];
     pthread_t consumer_threads[CONSUMERS];
@@ -145,7 +158,12 @@ int main(int argc, char* argv[])
     	pthread_join(consumer_threads[i], NULL);
     }
 
+    printf("### counter final value = %d ###\n",
+        counter);
     printf("### consumer_sum final value = %d ###\n",
         consumer_sum);
+    time(&end);
+    double time_taken = (double)(end-start);
+    printf("### Time Taken = %f ###\n", time_taken);
     pthread_exit(NULL);
 }
