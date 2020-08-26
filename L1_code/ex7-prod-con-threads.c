@@ -13,7 +13,7 @@
 #define PRODUCERS 2
 #define CONSUMERS 1
 #define BUFFER_SIZE 10
-#define THRESHOLD 30000
+#define THRESHOLD 100
 
 int producer_buffer[BUFFER_SIZE] = {};
 int consumer_sum;
@@ -110,10 +110,6 @@ void* consumer(void* threadid)
 
 int main(int argc, char* argv[])
 {	
-    // initialise timer
-    time_t start, end;
-    time(&start);
-
 	read_i = 0;
 	write_i = 0;
     counter = 0;
@@ -161,8 +157,6 @@ int main(int argc, char* argv[])
         counter);
     printf("### consumer_sum final value = %d ###\n",
         consumer_sum);
-    time(&end);
-    double time_taken = (double)(end-start);
-    printf("### Time Taken = %f ###\n", time_taken);
+    
     pthread_exit(NULL);
 }

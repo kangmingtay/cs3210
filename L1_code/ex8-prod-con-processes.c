@@ -20,7 +20,7 @@
 #define PRODUCERS 2
 #define CONSUMERS 1
 #define BUFFER_SIZE 10
-#define THRESHOLD 30000
+#define THRESHOLD 100
 
 int producer_buffer[BUFFER_SIZE] = {};
 
@@ -72,10 +72,6 @@ void initialise_buffer(int* buffer, int* read_i) {
 
 int main(int argc, char* argv[])
 {
-    /*      initialise timer        */
-    time_t start, end;
-    time(&start);
-
     /*      loop variables          */
     int i;
     /*      shared memory keys      */
@@ -239,9 +235,6 @@ int main(int argc, char* argv[])
         /* unlink prevents the semaphore existing forever */
         /* if a crash occurs during the execution         */
 
-        time(&end);
-        double time_taken = (double)(end-start);
-        printf("### Time Taken = %f ###\n", time_taken);
         exit(0);
     }
 }
