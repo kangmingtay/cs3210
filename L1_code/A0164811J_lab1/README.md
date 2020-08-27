@@ -19,7 +19,7 @@ Steps to test:
 5. `time ./ex8`
 6. Observe `real` values for both outputs  
 
-I also created a separate implementation for exercise 7 using condition variables. However, that implementation seemed to run slower than the multi-threaded version(~3ms difference). 
+I also created a separate implementation for exercise 7 using condition variables. Both implementations of ex7 take approximately the same time to run.
 
 Steps to time ex7 with cv:
 1. Change the `THRESHOLD` value to 100

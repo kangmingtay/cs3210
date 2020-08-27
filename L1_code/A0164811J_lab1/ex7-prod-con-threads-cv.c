@@ -13,7 +13,7 @@
 #define PRODUCERS 2
 #define CONSUMERS 1
 #define BUFFER_SIZE 10
-#define THRESHOLD 100
+#define THRESHOLD 1000000
 
 int producer_buffer[BUFFER_SIZE] = {};
 int consumer_sum;
@@ -71,11 +71,11 @@ void* producer(void* threadid)
 	while(1) {
         pthread_mutex_lock(&spaces);
         if (isQueueFull()) {
-            printf("Buffer is full! Waiting for consumer to read!\n");
+            // printf("Buffer is full! Waiting for consumer to read!\n");
             pthread_cond_wait(&spaces_threshold_cv, &spaces);
 		} 
         if (counter == THRESHOLD) {
-            printf("=== Threshold is reached ===\n");
+            // printf("=== Threshold is reached ===\n");
             pthread_mutex_unlock(&spaces);
             break;
         }
@@ -92,7 +92,7 @@ void* producer(void* threadid)
 
 		pthread_mutex_unlock(&spaces);
         // signal for consumer to read
-        printf("Sending signal to consumer!\n");
+        // printf("Sending signal to consumer!\n");
         pthread_cond_signal(&items_threshold_cv);
 
 		// sleep(1);
@@ -105,14 +105,12 @@ void* consumer(void* threadid)
 	while (1) {
         pthread_mutex_lock(&items);
         if (isQueueEmpty()) {
-            // Wait for producer to signal that there is at least an item in the queue
-            printf("Buffer is empty! Waiting for producer to produce...\n");
-            // Waits and gives up lock?
+            // printf("Buffer is empty! Waiting for producer to produce...\n");
             pthread_cond_wait(&items_threshold_cv, &items);
 		}
 
         if (counter == THRESHOLD) {
-            printf("=== Threshold is reached ===\n");
+            // printf("=== Threshold is reached ===\n");
             pthread_mutex_unlock(&items);
             break;
         }
@@ -126,7 +124,7 @@ void* consumer(void* threadid)
 		pthread_mutex_unlock(&lock);
         pthread_mutex_unlock(&items);
 
-        printf("Finished reading! Sending signal to producer...\n");
+        // printf("Sending signal to producer...\n");
         pthread_cond_signal(&spaces_threshold_cv);
 		// sleep(1);
 	}

@@ -76,16 +76,8 @@ int main(int argc, char* argv[])
     int i;
     /*      shared memory keys      */
     key_t shmkey;
-    key_t shmkey2;
-    key_t shmkey3;
-    key_t shmkey4;
-    key_t shmkey5;
     /*      shared memory ids        */
     int shmid;
-    int shmid_read;
-    int shmid_write;
-    int shmid_counter;
-    int shmid_sum;
     /*      synch semaphore         */ /*shared */
     sem_t* sem;
     /*      fork pid                */
@@ -104,38 +96,36 @@ int main(int argc, char* argv[])
     int processType = 0; // if processType < PRODUCERS -> producer else consumer
 
     /* initialize a shared variable in shared memory */
-    shmkey = ftok("/dev/null", 5); /* valid directory name and a number */
-    shmkey2 = ftok("/dev/null", 0); /* valid directory name and a number */
-    shmkey3 = ftok("/dev/null", 1); /* valid directory name and a number */
-    shmkey4 = ftok("/dev/null", 2); /* valid directory name and a number */
-    shmkey5 = ftok("/dev/null", 3); /* valid directory name and a number */
+    shmkey = ftok("/dev/null", 0); /* valid directory name and a number */
+
     printf("shmkey for p = %d\n", shmkey);
 
     // maps file to 
-    shmid = shmget(shmkey, sizeof(producer_buffer), 0644 | IPC_CREAT);
-    shmid_read = shmget(shmkey2, sizeof(int), 0644 | IPC_CREAT);
-    shmid_write = shmget(shmkey3, sizeof(int), 0644 | IPC_CREAT);
-    shmid_counter = shmget(shmkey4, sizeof(int), 0644 | IPC_CREAT);
-    shmid_sum = shmget(shmkey5, sizeof(int), 0644 | IPC_CREAT);
+    shmid = shmget(shmkey, sizeof(int) * (BUFFER_SIZE + 4), 0644 | IPC_CREAT);
 
-    if (shmid < 0 || shmid_read < 0 || shmid_write < 0) { /* shared memory error check */
+    if (shmid < 0) { /* shared memory error check */
         perror("shmget\n");
         exit(1);
     }
+    // if (shmid < 0 || shmid_read < 0 || shmid_write < 0) { /* shared memory error check */
+    //     perror("shmget\n");
+    //     exit(1);
+    // }
 
     p = (int*)shmat(shmid, NULL, 0); /* attach p to shared memory */
-    read_i = (int*)shmat(shmid_read, NULL, 0); /* attach read_i to shared memory */
-    write_i = (int*)shmat(shmid_write, NULL, 0); /* attach write_i to shared memory */
-    counter = (int*)shmat(shmid_counter, NULL, 0); /* attach counter to shared memory */
-    consumer_sum = (int*)shmat(shmid_sum, NULL, 0); /* attach sum to shared memory */
+    read_i = p; /* attach read_i to shared memory */
+    write_i = p+1; /* attach write_i to shared memory */
+    counter = p+2; /* attach counter to shared memory */
+    consumer_sum = p+3; /* attach sum to shared memory */
+    p = p+4; /* shift p & use remaining shared memory for buffer */
     
-
     // clear shared memory
     *read_i = 0;
     *write_i = 0;
     *counter = 0;
     *consumer_sum = 0;
     initialise_buffer(p, read_i);
+    printf("p: %p, read_i: %p, write_i: %p, counter: %p, sum: %p\n", p, read_i, write_i, counter, consumer_sum);
     // printf("p=%d is allocated in shared memory.\n\n", *p);
 
     /********************************************************/
@@ -216,18 +206,6 @@ int main(int argc, char* argv[])
         /* shared memory detach - cleanup allocated memory */
         shmdt(p);
         shmctl(shmid, IPC_RMID, 0);
-
-        shmdt(read_i);
-        shmctl(shmid_read, IPC_RMID, 0);
-
-        shmdt(write_i);
-        shmctl(shmid_write, IPC_RMID, 0);
-
-        shmdt(consumer_sum);
-        shmctl(shmid_sum, IPC_RMID, 0);
-
-        shmdt(counter);
-        shmctl(shmid_counter, IPC_RMID, 0);
 
         /* cleanup semaphores */
         sem_unlink("pSem");
